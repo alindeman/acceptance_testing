@@ -1,0 +1,532 @@
+<!doctype html>  
+<html lang="en">
+  
+  <head>
+    <meta charset="utf-8">
+    
+    <title>Acceptance Testing</title>
+
+    <meta name="description" content="Acceptance Testing (in Ruby, with Cucumber and RSpec)">
+    <meta name="author" content="Andy Lindeman">
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/print.css" type="text/css" media="print">
+
+    <link rel="stylesheet" href="lib/zenburn.css">
+
+    <style>
+      #reveal ul.intro-links {
+        list-style: none;
+      }
+
+      #reveal pre {
+        font-size: 18px;
+      }
+
+
+    </style>
+  </head>
+  
+  <body>
+    
+    <div id="reveal">
+
+      <!-- Used to fade in a background when a specific slide state is reached -->
+      <div class="state-background"></div>
+      
+      <!-- Any section element inside of this container is displayed as a slide -->
+      <div class="slides">
+        <section>
+          <h1>Acceptance Testing</h1>
+          <h3>Andy Lindeman</h3>
+          <ul class="intro-links">
+            <li><a href="http://twitter.com/alindeman">@alindeman</a></li>
+            <li><a href="http://github.com/rspec">RSpec Core Team</a></li>
+            <li><a href="http://highgroove.com">Highgroover</a></li>
+          </ul>
+          <script>
+            // Delicously hacky. Look away.
+            if( navigator.userAgent.match( /(iPhone|iPad|iPod|Android)/i ) ) document.write( '<p style="color: rgba(0,0,0,0.3); text-shadow: none;">('+'Tap to navigate'+')</p>' );
+          </script>
+        </section>
+
+        <section>
+          <h1>Levels of Testing</h1>
+          <h4>Roughly speaking...</h4>
+          <ul>
+            <li class="fragment">Unit Tests</li>
+            <li class="fragment">Integration Tests</li>
+            <li class="fragment">Acceptance Tests</li>
+          </ul>
+        </section>
+
+        <section>
+          <h1>Unit Tests</h1>
+          <ul>
+            <li>Isolation</h1>
+            <li>Dependencies often mocked or stubbed</li>
+            <li>No filesystem, network, database (<strike>Rails "unit" tests</strike>)</li>
+            <li><a href="http://www.c2.com/cgi/wiki?ProgrammerTest">Programmer Tests</a></li>
+          </ul>
+        </section>
+
+        <section>
+          <h1>Acceptance Tests</h1>
+          <ul>
+            <li>End-to-end (as much as is feasible)</li>
+            <li>No implementation details (black box)</li>
+            <li>Often based on a user story</li>
+            <li>Can be run <a href="http://searls.testdouble.com/2012/04/01/types-of-tests/">locally or remotely</a></li>
+            <li><a href="http://www.c2.com/cgi/wiki?CustomerTest">Customer Tests</a></li>
+          </ul>
+        </section>
+
+        <section>
+          <h1>A few quick examples...</h1>
+        </section>
+
+        <section>
+          <h1>Unit Test</h1>
+          <pre><code class="ruby">
+            describe BankAccount do
+              specify "new accounts have a zero balance" do
+                account = BankAccount.new
+                expect(account.balance).to eq(BigDecimal("0.00"))
+              end
+            end
+          </code></pre>
+        </section>
+
+        <section>
+          <h1>Acceptance Test</h1>
+          <h4>(Cucumber/Gherkin)</h4>
+          <pre><code>
+            As a depositor
+            In order to safeguard my money
+            I want to hold it in a bank account
+
+            Given I am a depositor
+            When I open a new bank account
+            Then my balance is $0.00
+          </code></pre>
+          <!-- No reference, even indirectly, of programming language -->
+          <!-- No reference, even indirectly, of code objects -->
+          <!-- No implementation details: could be on web, iPhone, teller machine, etc... -->
+        </section>
+
+        <section>
+          <h1>Acceptance Test</h1>
+          <pre><code class="ruby">
+            Given /I am a depositor/ do
+              @user = Factory(:depositor)
+              sign_in(@user)
+            end
+
+            When /I open a new bank account/ do
+              click_button "New Account"
+            end
+
+            Then /my balance is $([0-9.]+)/ do |bal|
+              expect(page).to have_text("Balance: $#{bal}")
+            end
+          </code></pre>
+          <!-- Too much ceremony? Well, it's a contrived example -->
+          <!-- We can talk more about how it helps build bigger, more complicated systems -->
+        </section>
+
+
+        <section>
+          <h1>Workflow</h1>
+          <h4>(roughly)</h4>
+          <ul>
+            <li class="fragment">Translate a user story into an acceptance test (or few)</li>
+            <li class="fragment">Watch the acceptance test fail</li>
+            <li class="fragment">Write a failing unit test</li>
+            <li class="fragment">Watch the unit test fail</li>
+            <li class="fragment">Make the unit test pass</li>
+            <li class="fragment">Refactor</li>
+            <li class="fragment">Watch the acceptance test get a bit farther</li>
+            <li class="fragment">Repeat until all tests are passing</li>
+            <li class="fragment">Confidently deliver the feature</li>
+        </section>
+
+        <section>
+          <h1>Good Practices</h1>
+          <h3 class="fragment">In my very humble opinion ...</h3>
+          <h4 class="fragment">Seriously, I'm still learning this stuff too</h4>
+          <h5 class="fragment">But here's some things I've observed</h5>
+        </section>
+
+        <section>
+          <h1>Hide Implementation Details</h1>
+          <pre><code>
+            Given I am a newsletter publisher
+            When I send out an electronic newsletter
+            Then when Resque jobs are run
+            And after 5 minutes passes
+            Then the newsletter is received by all recipients
+          </code></pre>
+        </section>
+
+        <section>
+          <h1>Hide Implementation Details</h1>
+          <pre><code>
+            Given I am a newsletter publisher
+            When I send out an electronic newsletter
+            Then all recipients receive my newsletter within 5 minutes
+          </code></pre>
+
+          <div class="fragment">
+            How would your customer talk to others about this feature? How would a salesperson?
+          </div>
+
+          <!-- This is a good time to talk about using web_steps or factory_girl steps -->
+          <!-- Don't do it! They are implementation details and make for brittle features -->
+        </section>
+
+        <section>
+          <h1>Avoid "Programming"</h1>
+
+          <pre><code>
+            Given I am a user named "Alice"
+            And there is a user "Bob" who is my friend
+            And there is a user "Charlie" who is a friend of "Bob"
+            When "Alice" invites "Bob" to a party
+            But "Alice" does not invite "Charlie" to the same party
+            Then "Alice" receives a message
+              "Do you also want to invite Charlie?"
+          </code></pre>
+
+          <div class="fragment">
+            No customer or user would ever describe the feature like this ...
+          </div>
+        </section>
+
+        <section>
+          <h1>Avoid "Programming"</h1>
+
+          <pre><code>
+            As a party planner
+            In order to have the best party
+            I want to invite as many fun people as possible
+
+            Given that I am planning a party
+            When I invite my friend Alice
+            Then I am asked if I might want to invite her friend Bob
+          </code></pre>
+        </section>
+
+        <section>
+          <h1>Focus</h1>
+          <pre><code>
+            Given I do not yet have an account with bank.example.com
+            When I register for an account
+            And I correctly decipher the CAPTCHA image proving
+              I am a human
+            And I correctly input the code on my RSA SecurID dongle
+            And I deposit $20.00
+            Then my account balance is $20.00
+          </code></pre>
+
+          <div class="fragment">
+            What is this feature really about?
+          </div>
+        </section>
+
+        <section>
+          <h1>Focus</h1>
+          <pre><code>
+            Given I am a depositor
+            When I deposit $20.00
+            Then my account balance is increased by $20.00
+          </code></pre>
+
+          <div class="fragment">
+            Some other features should describe that complicated sign up
+            process if it is important.
+          </div>
+          <div class="fragment">
+            ... but not <i>every</i> feature that implicitly requires signing
+            up.
+          </div>
+        </section>
+
+        <section>
+          <h1>Use Consistent Terminology</h1>
+          <pre><code>
+            Given I am a user who has forgotten his password
+            When I request that my password be reset
+            Then I receive an email with instructions
+              to replace my passcode
+          </code></pre>
+
+          <div class="fragment">
+            This example is obvious ("password" vs. "passcode") and ("reset"
+            vs. "replace").
+          </div>
+          <div class="fragment">
+            ... but others are less so. Multiple terms for the same thing are
+            confusing for everyone.
+          </div>
+          <div class="fragment">
+            ... or might be telling you that the feature is not fully
+            fleshed out yet.
+          </div>
+        </section>
+
+        <section>
+          <h1>Don't Exhaustively Test Edge Cases</h1>
+          <pre><code>
+            Given I am a depositor
+            And my account balance is $50.00
+            When I attempt to withdraw $49.99
+            Then the transaction is allowed
+            And my balance is $0.01
+
+            Given I am a depositor
+            And my account balance is $50.00
+            When I attempt to withdraw $50.01
+            Then the transaction is not allowed
+            And my balance remains $50.00
+          </code></pre>
+
+          <div class="fragment">
+            Test many edge cases if they are important, but not as acceptance
+            tests.
+          </div>
+        </section>
+
+        <section>
+          <h1>But Why?</h1>
+          <h2 class="fragment">This is tedious and nobody but me will ever read these.</h2>
+        </section>
+
+        <section>
+          <h1>Your customers can write them</h1>
+          <img style="max-width:638px" src="http://img.skitch.com/20120706-e4wt2m6ks42u547yfhw9m99fnx.medium.jpg" alt="Highgroove - sprint.ly" />
+        </section>
+
+        <section>
+          <h1>Your customers can write them</h1>
+
+          <ul>
+            <li class="fragment">
+              They can do this. You may just need to clean up their prose a bit.
+            </li>
+            <li class="fragment">
+              Now impress them: "the stories you write are being used to
+              verify I implement features correctly"
+            </li>
+            <li class="fragment">
+              "... and that these features do not break in the future"
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h1>My customer doesn't care</h1>
+          <h2 class="fragment">Are you sure?</h2>
+          <h3 class="fragment">Have you asked them?</h3>
+          <h4 class="fragment">Have they seen <i>good</i> acceptance tests in action?</h4>
+        </section>
+
+        <section>
+          <h1>Seriously, they don't care</h1>
+          <h2 class="fragment">Admittedly, that's sad</h2>
+          <h3 class="fragment">But what if writing them still had benefits?</h3>
+
+        </section>
+
+        <section>
+          <h1>Other Benefits</h1>
+          <ul>
+            <li class="fragment">You as a developer are forced to think as a user</li>
+            <li class="fragment">... or a business person</li>
+            <li class="fragment">"I need this database table and this model and this controller" vs. "what value is this feature providing?" is hard</li>
+            <li class="fragment">Acceptance tests help formalize that transition</li>
+          </ul>
+        </section>
+
+        <section>
+          <h1>Other Benefits</h1>
+          <ul>
+            <li class="fragment">One-stop shop for "what does this application do?" in language everyone can read</li>
+            <li class="fragment">New developers</li>
+            <li class="fragment">New project managers</li>
+            <li class="fragment">Salespeople (oh, we have to know what this thing does to make money?</li>
+          </ul>
+        </section>
+
+        <section>
+          <h1>Other Benefits</h1>
+          <ul>
+            <li class="fragment">Who has tried writing real isolated unit tests?</li>
+            <li class="fragment">It was awesome, right?</li>
+            <li class="fragment">But did you ever run into issues integrating those isolated objects, esp. after refactoring?</li>
+            <li class="fragment">Did you have good higher-level tests?</li>
+            <li class="fragment">... ones that you trusted and were not brittle?</li>
+          </ul>
+        </section>
+
+        <section>
+          <h1>Tests Should Make You Go Fast</h1>
+          <ul>
+            <li class="fragment">Good acceptance tests: have your cake and eat it too.</li>
+            <li class="fragment">Fast unit tests that drive good design, facilitate refactoring and encourage cohesion.</li>
+            <li class="fragment">Slower, end-to-end tests that verify everything fits together properly and provides value to customers.</li>
+          </ul>
+
+          <!-- Once you get over the initial learning curve, these complementary tests are great -->
+          <!-- There's some slowness, but done right, I think it's less slow than maintaining "full stack" unit tests -->
+          <!-- You should not be scared to refactor. Refactoring should not be daunting. Brittle, tightly coupled tests at the lower levels makes refactoring daunting -->
+        </section>
+
+        <section>
+          <h1>By the way ...</h1>
+          <h2 class="fragment">You <i>can</i> write acceptance tests without Cucumber</h2>
+        </section>
+
+        <section>
+          <h1>RSpec and Capybara</h1>
+
+          <pre><code class="ruby">
+            feature "Accounts" do
+              include AccountSteps
+
+              scenario "new accounts start with a zero balance" do
+                login_as_depositor
+                open_new_account
+                balance_should_be("0.00")
+              end
+            end
+          </code></pre>
+        </section>
+
+        <section>
+          <h1>RSpec and Capybara</h1>
+
+          <pre><code class="ruby">
+            module AccountSteps
+              def login_as_depositor
+                # click_on ...
+                # fill_in ...
+              end
+
+              def open_new_account
+                # ...
+              end
+
+              def balance_should_be(balance)
+                expect(page).to have_text("Balance: $#{balance}")
+              end
+            end
+          </code></pre>
+        </section>
+
+        <section>
+          <h1>Be wary of</h1>
+
+          <pre><code class="ruby">
+            feature "Accounts" do
+              scenario "transferring money between accounts" do
+                visit root_path
+                click_on "Login"
+                fill_in "username", with: "andy@example.com"
+                page.execute_script "$('omg_js').hack()"
+                # ...
+              end
+            end
+          </code></pre>
+        </section>
+
+        <section>
+          <h1>Be wary of</h1>
+
+          <ul>
+            <li class="fragment">
+              Acceptance tests themselves should not change unless the feature itself changed appreciably
+            </li>
+            <li class="fragment">
+              The code behind may change slightly as the view layer changes
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h1>That's all folks</h1>
+        </section>
+      </div>
+
+      <!-- The navigational controls UI -->
+      <aside class="controls">
+        <a class="left" href="#">&#x25C4;</a>
+        <a class="right" href="#">&#x25BA;</a>
+        <a class="up" href="#">&#x25B2;</a>
+        <a class="down" href="#">&#x25BC;</a>
+      </aside>
+
+      <!-- Displays presentation progress, max value changes via JS to reflect # of slides -->
+      <div class="progress"><span></span></div>
+      
+    </div>
+
+    <!-- Optional libraries for code syntax highlighting and classList support in IE9 -->
+    <script src="lib/highlight.js"></script>
+    <script src="lib/classList.js"></script>
+    
+    <script src="js/reveal.js"></script>
+    
+    <script>
+      // Parse the query string into a key/value object
+      var query = {};
+      location.search.replace( /[A-Z0-9]+?=(\w*)/gi, function(a) {
+        query[ a.split( '=' ).shift() ] = a.split( '=' ).pop();
+      } );
+
+      // Fires when a slide with data-state=customevent is activated
+      Reveal.addEventListener( 'customevent', function() {
+        alert( '"customevent" has fired' );
+      } );
+
+      // Fires each time a new slide is activated
+      Reveal.addEventListener( 'slidechanged', function( event ) {
+        // event.indexh & event.indexv
+      } );
+
+      Reveal.initialize({
+        // Display controls in the bottom right corner
+        controls: true,
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // If true; each slide will be pushed to the browser history
+        history: true,
+
+        // Loops the presentation, defaults to false
+        loop: false,
+
+        // Flags if mouse wheel navigation should be enabled
+        mouseWheel: true,
+
+        // Apply a 3D roll to links on hover
+        rollingLinks: true,
+
+        // UI style
+        theme: query.theme || 'default', // default/neon
+
+        // Transition style
+        transition: query.transition || 'default' // default/cube/page/concave/linear(2d)
+      });
+
+      hljs.initHighlightingOnLoad();
+    </script>
+
+  </body>
+</html>
